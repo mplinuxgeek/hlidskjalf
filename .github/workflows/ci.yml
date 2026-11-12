@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install --quiet pyflakes
+      - run: python -m compileall -q hlidskjalf
+      - run: python -m pyflakes hlidskjalf
+      - run: node --check hlidskjalf/static/app.js
+      - run: node --check hlidskjalf/static/theme.js
+      - name: Installer syntax and lint
+        run: |
+          sh -n deploy/install.sh
+          shellcheck --severity=warning deploy/install.sh
+      - name: Release tag matches version
+        if: github.ref_type == 'tag'
+        run: |
+          v=$(python -c "import hlidskjalf; print(hlidskjalf.__version__)")
+          [ "$GITHUB_REF_NAME" = "v$v" ]
+      - name: Unit hardening
+        run: |
+          for u in hlidskjalf hlidskjalf-helper; do
+            systemd-analyze security --offline=true --threshold=30 --no-pager deploy/$u.service
+          done

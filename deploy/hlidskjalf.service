@@ -1,0 +1,65 @@
+# /etc/systemd/system/hlidskjalf.service
+#
+# The dashboard runs as the unprivileged user "hlidskjalf" in a read-only
+# sandbox. Its only capability is CAP_PERFMON (i915 PMU: GPU engine busy %,
+# frequency, RC6). Data that needs more privilege (podman, SMART, per-client
+# GPU usage) comes from hlidskjalf-helper.service via /run/hlidskjalf-helper.
+[Unit]
+Description=hlidskjalf server dashboard
+Documentation=https://github.com/mplinuxgeek/hlidskjalf
+Wants=network-online.target
+After=network-online.target sysstat.service
+
+[Service]
+Type=simple
+User=hlidskjalf
+Group=hlidskjalf
+WorkingDirectory=/usr/local/lib/hlidskjalf
+ExecStart=/usr/bin/python3 -sB -m hlidskjalf
+EnvironmentFile=-/etc/hlidskjalf/hlidskjalf.env
+Environment=HLID_DATA_DIR=%S/hlidskjalf HOME=%S/hlidskjalf PYTHONUNBUFFERED=1
+StateDirectory=hlidskjalf
+StateDirectoryMode=0700
+Restart=on-failure
+RestartSec=5
+
+# Privileges: CAP_PERFMON only (drop both lines to lose the PMU but keep
+# sysfs GPU frequency / RC6 and per-client usage from the helper).
+AmbientCapabilities=CAP_PERFMON
+CapabilityBoundingSet=CAP_PERFMON
+NoNewPrivileges=yes
+
+# Filesystem: everything read-only, no devices, private /tmp.
+# ProtectProc stays at its default: per-container CPU/RAM and GPU client
+# owners come from other processes' /proc/<pid>/cgroup.
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+UMask=0077
+
+# Kernel attack surface.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service perf_event_open
+SystemCallFilter=~@privileged @resources
+SystemCallErrorNumber=EPERM
+
+# Resource limits.
+TasksMax=64
+MemoryMax=256M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

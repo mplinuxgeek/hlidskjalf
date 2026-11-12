@@ -1,0 +1,2 @@
+# /etc/sysusers.d/hlidskjalf.conf - unprivileged user for the dashboard
+u hlidskjalf - "hlidskjalf dashboard" /var/lib/hlidskjalf /usr/sbin/nologin

@@ -1,0 +1,61 @@
+# /etc/systemd/system/hlidskjalf-helper.service
+#
+# Root one-shot started by hlidskjalf-helper.timer. Collects what the
+# unprivileged dashboard may not read and writes JSON to /run/hlidskjalf-helper
+# (root:hlidskjalf 0750). It takes no input from the dashboard, has no network
+# access and keeps only the capabilities below:
+#   CAP_SYS_RAWIO, CAP_SYS_ADMIN    smartctl (SATA/SCSI pass-through, NVMe admin)
+#   CAP_SYS_PTRACE, CAP_DAC_READ_SEARCH
+#                                  /proc/<pid>/fd and fdinfo of other users'
+#                                  processes (host-network container ports,
+#                                  per-client GPU usage)
+# The podman API socket is reached as uid 0 (owner); no capability needed.
+[Unit]
+Description=hlidskjalf privileged data collector
+Documentation=https://github.com/mplinuxgeek/hlidskjalf
+After=podman.socket
+
+[Service]
+Type=oneshot
+Group=hlidskjalf
+WorkingDirectory=/usr/local/lib/hlidskjalf
+ExecStart=/usr/bin/python3 -sB -m hlidskjalf.helper
+EnvironmentFile=-/etc/hlidskjalf/hlidskjalf.env
+RuntimeDirectory=hlidskjalf-helper
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
+UMask=0027
+TimeoutStartSec=120
+
+CapabilityBoundingSet=CAP_SYS_RAWIO CAP_SYS_ADMIN CAP_SYS_PTRACE CAP_DAC_READ_SEARCH
+NoNewPrivileges=yes
+
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+# Disks for smartctl, read-only.
+DevicePolicy=closed
+DeviceAllow=block-sd r
+DeviceAllow=block-blkext r
+DeviceAllow=char-nvme r
+
+# Only the podman unix socket; no IP traffic at all.
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+TasksMax=16
+MemoryMax=256M

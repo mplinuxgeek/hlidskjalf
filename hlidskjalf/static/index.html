@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0d16">
+<title>hlidskjalf</title>
+<script src="/static/theme.js"></script>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/vendor/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/vendor/uPlot.min.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="bg"></div>
+<header class="top">
+  <div class="brand">
+    <svg class="eye" viewBox="0 0 32 32" aria-hidden="true"><path d="M2 16c3.5-6 8.5-9 14-9s10.5 3 14 9c-3.5 6-8.5 9-14 9S5.5 22 2 16z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="currentColor"/></svg>
+    <span class="brand-name">hlidskjalf</span>
+  </div>
+  <nav class="hosts" id="hosts" aria-label="Hosts"></nav>
+  <div class="pulse" id="pulse" title="live"><i></i></div>
+  <div class="menu-wrap">
+    <button class="icon-btn" id="export-btn" type="button" title="Export data" aria-label="Export data" aria-haspopup="true" aria-expanded="false"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8.500M8 10.500 4.800 7.300M8 10.500l3.200-3.200M2.500 11.500v1.500a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1.500"/></svg></button>
+    <div class="menu" id="export-menu" hidden>
+      <small id="export-range"></small>
+      <button type="button" data-fmt="csv"><b>CSV</b><span>time series, one row per sample</span></button>
+      <button type="button" data-fmt="json"><b>JSON</b><span>series plus drives, containers, VMs, UPS</span></button>
+    </div>
+  </div>
+  <button class="icon-btn" id="theme-btn" type="button" title="Theme" aria-label="Theme" aria-expanded="false"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.6 1.5-1.4 0-.9-.7-1.2-.7-2 0-.7.6-1.2 1.4-1.2h1.5a2.8 2.8 0 0 0 2.8-2.8C14.500 4 11.600 1.500 8 1.500z"/><circle cx="5" cy="7" r=".6"/><circle cx="7.500" cy="4.500" r=".6"/><circle cx="10.500" cy="5.500" r=".6"/></svg></button>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="ident card">
+      <div class="host-title"><h1 id="hostname">-</h1><span class="badge" id="os-badge"></span></div>
+      <dl class="facts" id="facts"></dl>
+    </div>
+    <div class="tiles" id="tiles">
+      <div class="tile" data-acc="cpu" data-goto="cpu"><span class="lbl"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/><path d="M6 1.5v2M10 1.5v2M6 12.5v2M10 12.5v2M1.5 6h2M1.5 10h2M12.5 6h2M12.5 10h2"/></svg>CPU</span><b id="t-cpu">-</b><small id="t-cpu-sub"></small><svg class="spark" id="s-cpu" preserveAspectRatio="none"></svg></div>
+      <div class="tile" data-acc="mem" data-goto="mem"><span class="lbl"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.5" width="13" height="7" rx="1.2"/><path d="M4.5 7v2M7 7v2M9.5 7v2M12 7v2M3.5 11.5v2M12.5 11.5v2"/></svg>Memory</span><b id="t-mem">-</b><small id="t-mem-sub"></small><svg class="spark" id="s-mem" preserveAspectRatio="none"></svg></div>
+      <div class="tile" data-acc="gpu" data-goto="gpu" id="tile-gpu" hidden><span class="lbl"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><circle cx="6" cy="8" r="2.2"/><path d="M10 6.5h2.5M10 9.5h2.5"/></svg>GPU<em id="t-gpu-name"></em></span><b id="t-gpu">-</b><small id="t-gpu-sub"></small><svg class="spark" id="s-gpu" preserveAspectRatio="none"></svg></div>
+      <div class="tile" data-acc="temp" data-goto="temps"><span class="lbl"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.6V3a1.5 1.5 0 0 1 3 0v6.6a3 3 0 1 1-3 0z"/><path d="M8 7v4.5"/></svg>CPU temp</span><b id="t-temp">-</b><small id="t-temp-sub"></small><svg class="spark" id="s-temp" preserveAspectRatio="none"></svg></div>
+      <div class="tile" data-acc="net" data-goto="net"><span class="lbl"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.5v11M4.5 13.5 2 11M4.5 13.5 7 11M11.5 13.5v-11M11.5 2.5 9 5M11.5 2.5 14 5"/></svg>Network</span><b id="t-net">-</b><small id="t-net-sub"></small><svg class="spark" id="s-net" preserveAspectRatio="none"></svg></div>
+      <div class="tile" data-acc="ups" data-goto="temps"><span class="lbl"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.5" width="11.5" height="7" rx="1.5"/><path d="M14.5 7v2"/><path d="m7.8 5.8-1.8 2.6h2.4L6.6 11"/></svg>UPS</span><b id="t-ups">-</b><small id="t-ups-sub"></small><div class="minibar"><i id="t-ups-bar"></i></div></div>
+    </div>
+  </section>
+
+  <div class="tabbar" id="tabbar">
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="cpu" data-acc="cpu">CPU</button>
+      <button role="tab" data-tab="mem" data-acc="mem">Memory</button>
+      <button role="tab" data-tab="gpu" data-acc="gpu">GPU</button>
+      <button role="tab" data-tab="temps" data-acc="temp">Temps &amp; UPS</button>
+      <button role="tab" data-tab="net" data-acc="net">Network</button>
+      <button role="tab" data-tab="disk" data-acc="disk">Storage</button>
+      <button role="tab" data-tab="ct" data-acc="ct">Containers<em id="ct-count"></em></button>
+      <button role="tab" data-tab="vm" data-acc="vm">VMs<em id="vm-count"></em></button>
+    </nav>
+    <div class="range" id="range" role="group" aria-label="Chart range">
+      <button data-r="live" class="on">Live</button>
+      <button data-r="1h">1h</button>
+      <button data-r="24h">24h</button>
+      <button data-r="7d">7d</button>
+    </div>
+  </div>
+
+  <!-- every tab: summary strip, chart grid, then tables -->
+  <section class="panel" data-panel="cpu" role="tabpanel">
+    <div class="card strip" data-acc="cpu" id="st-cpu"></div>
+    <article class="card span8" data-acc="cpu"><header><h3>Utilisation</h3><span class="sub" id="cpu-model"></span></header><div class="chart tall" id="ch-cpu"></div></article>
+    <article class="card span4" data-acc="cpu"><header><h3>Cores</h3><span class="sub">busy per thread · temperature</span></header><div class="cores" id="cores"></div></article>
+    <article class="card span6" data-acc="cpu"><header><h3>Load average</h3><span class="sub" id="load-sub"></span></header><div class="chart" id="ch-load"></div></article>
+    <article class="card span6" data-acc="cpu"><header><h3>Power</h3><span class="sub">RAPL energy counters</span></header><div class="chart" id="ch-pw"></div></article>
+  </section>
+
+  <section class="panel" data-panel="mem" role="tabpanel" hidden>
+    <div class="card strip" data-acc="mem" id="st-mem"></div>
+    <article class="card span8" data-acc="mem"><header><h3>Usage</h3><span class="sub" id="mem-total"></span></header><div class="stackbar" id="mem-bar"></div><div class="legend-row" id="mem-legend"></div><div class="chart tall" id="ch-mem"></div></article>
+    <article class="card span4 flush" data-acc="mem"><header><h3>Containers by memory</h3><span class="sub" id="ctmem-sub"></span></header><div id="ctmem"></div></article>
+  </section>
+
+  <section class="panel" data-panel="gpu" role="tabpanel" hidden>
+    <div class="card strip" data-acc="gpu" id="st-gpu"></div>
+    <article class="card span8" data-acc="gpu"><header><h3>Engines</h3><span class="sub" id="gpu-sub"></span></header><div class="chart mid" id="ch-geng"></div></article>
+    <article class="card span4" data-acc="gpu"><header><h3>Engines now</h3><span class="sub" id="gpu-src"></span></header><div id="gpu-ov"><div class="empty">Waiting for data...</div></div></article>
+    <article class="card span4" data-acc="gpu"><header><h3>Frequency</h3><span class="sub" id="gpu-freq-sub"></span></header><div class="chart" id="ch-gfreq"></div></article>
+    <article class="card span4" data-acc="gpu"><header><h3>Power</h3><span class="sub">iGPU vs package</span></header><div class="chart" id="ch-gpw"></div></article>
+    <article class="card span4" data-acc="gpu"><header><h3>Clients</h3><span class="sub">busiest engine per owner</span></header><div class="chart" id="ch-gcl"></div></article>
+    <article class="card span12 flush" data-acc="gpu"><header><h3>Clients by engine</h3><span class="sub" id="gpu-cl-sub"></span></header><div id="gpu-clients"></div></article>
+  </section>
+
+  <section class="panel" data-panel="temps" role="tabpanel" hidden>
+    <div class="card strip" data-acc="temp" id="st-temps"></div>
+    <article class="card span8" data-acc="temp"><header><h3>Temperatures</h3><span class="sub" id="temp-sub"></span></header><div class="chart tall" id="ch-temp"></div></article>
+    <article class="card span4 flush" data-acc="temp"><header><h3>Sensors</h3><span class="sub" id="sens-sub"></span></header><div id="sensors"></div></article>
+    <article class="card span12" data-acc="ups"><header><h3>UPS</h3><span class="sub" id="ups-model"></span></header><div id="ups-body" class="ups-body"><div class="empty">Waiting for NUT...</div></div></article>
+  </section>
+
+  <section class="panel" data-panel="net" role="tabpanel" hidden>
+    <div class="card strip" data-acc="net" id="st-net"></div>
+    <article class="card span12" data-acc="net"><header><h3>Throughput</h3><span class="sub" id="net-iface"></span></header><div class="chart tall" id="ch-net"></div></article>
+    <article class="card span12 flush" data-acc="net"><header><h3>Interfaces</h3><span class="sub" id="nic-sub"></span></header><div id="nic-list"></div></article>
+  </section>
+
+  <section class="panel p-disk" data-panel="disk" role="tabpanel" hidden>
+    <div class="card strip" data-acc="disk" id="st-disk"></div>
+    <article class="card span6" data-acc="disk" id="io-card"><header><h3>Disk I/O</h3><span class="sub" id="io-sub">all physical drives</span></header><div class="chart tall" id="ch-io"></div></article>
+    <article class="card span6 flush" data-acc="disk" id="fs-card"><header><h3>Filesystems</h3><span class="sub" id="fs-sub"></span></header><div id="fs-list"></div></article>
+    <div class="span3 stack" id="disk-side"></div>
+    <article class="card span9 flush" data-acc="disk" id="drives-card"><header><h3>Drives</h3><span class="sub">SMART, refreshed every 10 min</span></header><div id="disk-list"></div></article>
+  </section>
+
+  <section class="panel" data-panel="ct" role="tabpanel" hidden>
+    <div class="card strip" data-acc="ct" id="st-ct"></div>
+    <article class="card span12 flush" data-acc="ct"><header><h3>Containers</h3><span class="sub" id="ct-sub">rootful podman</span></header><div id="ct-list"><div class="empty">Loading...</div></div></article>
+  </section>
+
+  <section class="panel" data-panel="vm" role="tabpanel" hidden>
+    <div class="card strip" data-acc="vm" id="st-vm"></div>
+    <article class="card span12 flush" data-acc="vm"><header><h3>Virtual machines</h3><span class="sub" id="vm-sub">libvirt, read-only</span></header><div id="vm-list"><div class="empty">Loading...</div></div></article>
+  </section>
+</main>
+
+<footer class="foot" id="foot"></footer>
+
+<div class="hw" id="hw" hidden>
+  <div class="hw-panel" role="dialog" aria-modal="true" aria-labelledby="hw-title">
+    <header class="hw-top">
+      <h2 id="hw-title">Hardware</h2>
+      <button class="th-btn pri" id="hw-export" type="button">Export .txt</button>
+      <button class="icon-btn" id="hw-close" type="button" title="Close" aria-label="Close">✕</button>
+    </header>
+    <div id="hw-body"></div>
+  </div>
+</div>
+
+<script src="/static/vendor/uPlot.iife.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

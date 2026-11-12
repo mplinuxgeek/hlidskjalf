@@ -1,0 +1,11 @@
+# /etc/systemd/system/hlidskjalf-helper.timer
+[Unit]
+Description=Run the hlidskjalf collector every 15 seconds
+
+[Timer]
+OnBootSec=5s
+OnUnitActiveSec=15s
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

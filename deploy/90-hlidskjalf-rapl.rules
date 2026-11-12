@@ -1,0 +1,7 @@
+# /etc/udev/rules.d/90-hlidskjalf-rapl.rules
+#
+# Optional: CPU / iGPU / DRAM power readings. The kernel makes RAPL energy
+# counters root-only because they are a (weak) side channel (CVE-2020-8694,
+# "PLATYPUS"). This grants read access to the hlidskjalf group only.
+ACTION=="add", SUBSYSTEM=="powercap", KERNEL=="intel-rapl:*", \
+  RUN+="/usr/bin/chgrp hlidskjalf /sys%p/energy_uj", RUN+="/usr/bin/chmod 0440 /sys%p/energy_uj"
